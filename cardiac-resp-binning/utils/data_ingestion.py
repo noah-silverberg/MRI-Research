@@ -225,34 +225,47 @@ def read_twix_file(
     return scans
 
 
-def extract_image_data(scans):
+def extract_image_data(scan, full_kspace_shape=None, ref_scan=False):
     """
     Extract image (k-space) data from a list of TWIX scan dictionaries.
 
     Parameters
     ----------
-    scans : list of dict
-        Output from `read_twix_file`.
+    scan : dict
+        A TWIX scan dictionary containing the image data.
+    full_kspace_shape : tuple, optional
+        Shape of the full k-space data: (n_frames, extended_pe_lines, n_coils, n_readout).
+        If not provided, the shape is inferred from the data.
+    ref_scan : bool, optional
+        If True, extract data from the reference scan. Default is False.
 
     Returns
     -------
     np.ndarray
-        Complex k-space data of shape (phase_encodes, coils, freq_encodes).
-        If no data is found, returns an empty array.
+        Extracted image data. If no image data is found, returns an empty array.
+        Shape is (phase_encodes, n_coils, n_readout) if full_kspace_shape is not provided.
     """
-    image_blocks = []
-    for scan in scans:
-        if "mdb" not in scan:
-            continue
-        for mdb in scan["mdb"]:
-            if mdb.is_image_scan():
+    if "mdb" not in scan:
+        raise ValueError("No mdb blocks found in scan.")
+
+    if full_kspace_shape:
+        out = np.zeros(full_kspace_shape, dtype=complex)
+    else:
+        image_blocks = []
+
+    for mdb in scan["mdb"]:
+        if mdb.is_image_scan() or (ref_scan and mdb.is_flag_set("PATREFSCAN")):
+            if full_kspace_shape:
+                out[mdb.cRep, mdb.cLin, ...] = mdb.data
+            else:
                 data = np.array(mdb.data, copy=True)
                 image_blocks.append(data)
 
-    if not image_blocks:
-        return np.array([])
+    if not full_kspace_shape:
+        if not image_blocks:
+            return np.array([])
+        out = np.stack(image_blocks, axis=0)
 
-    out = np.stack(image_blocks, axis=0)
     print(f"Extracted image data shape: {out.shape}")
     return out
 
