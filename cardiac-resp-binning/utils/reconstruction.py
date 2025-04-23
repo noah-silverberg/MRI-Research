@@ -6,6 +6,7 @@ Functions to reconstruct images (and k-space) from partial or processed k-space 
 
 import numpy as np
 import pygrappa
+from tqdm import tqdm
 
 
 def direct_ifft_reconstruction(
@@ -125,12 +126,21 @@ def grappa_reconstruction(kspace, calib_region, kernel_size=(5, 5)):
     n_frames = kspace.shape[0]
     recon_images_all = []
 
-    for i in range(n_frames):
+    for i in tqdm(range(n_frames), desc="Performing GRAPPA"):
         # Convert the current frame to double precision
         frame_kspace = np.array(kspace[i], dtype=np.complex128)
 
-        # Extract calibration data from this frame (and explicitly convert it)
-        start_line, end_line = calib_region
+        if calib_region == tuple(
+            ()
+        ):  # Calculate the maximum possible calibration region
+            acquired_lines = np.where(~np.all(frame_kspace == 0, axis=(1, 2)))[0]
+            contiguous_lines = np.split(
+                acquired_lines, np.where(np.diff(acquired_lines) != 1)[0] + 1
+            )
+            largest_block = max(contiguous_lines, key=len)
+            start_line, end_line = largest_block[0], largest_block[-1]
+        else:
+            start_line, end_line = calib_region
         calib_data = np.array(
             frame_kspace[start_line:end_line, :, :], dtype=np.complex128
         )

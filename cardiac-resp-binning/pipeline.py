@@ -36,20 +36,22 @@ def run_pipeline(config):
     print("Reading scan data and extracting parameters...")
     twix_file = config["data"]["twix_file"]
     dicom_folder = config["data"]["dicom_folder"]
-    n_frames = config["data"]["n_frames"]
-    row_offset = config["data"]["offset"]
-    extended_phase_lines = config["data"]["extended_pe_lines"]
+    full_kspace_shape = config["data"][
+        "full_kspace_shape"
+    ]  # [n_frames, extended_pe_lines, n_coils, readout]
+    ref_scan = config["data"].get("ref_scan", False)
 
     # Read TWIX data
     twix_data = di.read_twix_file(twix_file, include_scans=[-1], parse_pmu=False)
-    kspace = di.extract_image_data(twix_data)
-    n_phase_encodes_per_frame = kspace.shape[0] // n_frames
+    kspace = di.extract_image_data(twix_data[-1], full_kspace_shape, ref_scan=ref_scan)
+    n_phase_encodes_per_frame = np.count_nonzero(~np.all(kspace == 0, axis=(0, 2, 3)))
+    assert n_phase_encodes_per_frame == int(n_phase_encodes_per_frame)
 
     # Determine sampling frequency
     fs_method = config["processing"].get("sampling_rate", "twix")
     if fs_method == "twix":
         fs = 1 / (twix_data[-1]["hdr"]["Phoenix"]["alTR"][0] * 1e-6)
-        print(f"Sampling frequency from TWIX: {fs:.2f} Hz")
+        print(f"Sampling frequency from TWIX: {fs:.2f} Hz, TR = {1/fs * 1e3} ms")
     elif fs_method == "dicom":
         framerate, frame_time = di.get_dicom_framerate(dicom_folder)
         fs = framerate * n_phase_encodes_per_frame
@@ -133,14 +135,14 @@ def run_pipeline(config):
         # Even respiratory bins
         num_resp_bins = config["processing"]["num_resp_bins"]
         binned_data, binned_count = binning.bin_reconstructed_kspace_joint(
-            kspace.reshape(n_frames, -1, kspace.shape[1], kspace.shape[2]),
+            kspace,
             r_peaks.flatten(),
             resp_peaks.flatten(),
             num_cardiac_bins=num_cardiac_bins,
             num_respiratory_bins=num_resp_bins,
             n_phase_encodes_per_frame=n_phase_encodes_per_frame,
-            extended_phase_lines=extended_phase_lines,
-            row_offset=row_offset,
+            extended_phase_lines=full_kspace_shape[1],
+            row_offset=0,
         )
         total_resp_bins = num_resp_bins
     else:
@@ -157,7 +159,7 @@ def run_pipeline(config):
         total_resp_bins = num_exhalation_bins + num_inhalation_bins
 
         binned_data, binned_count = binning.bin_reconstructed_kspace_joint_physio(
-            kspace.reshape(n_frames, -1, kspace.shape[1], kspace.shape[2]),
+            kspace,
             r_peaks.flatten(),
             resp_peaks.flatten(),
             resp_troughs.flatten(),
@@ -165,8 +167,8 @@ def run_pipeline(config):
             num_exhalation_bins=num_exhalation_bins,
             num_inhalation_bins=num_inhalation_bins,
             n_phase_encodes_per_frame=n_phase_encodes_per_frame,
-            extended_phase_lines=extended_phase_lines,
-            row_offset=row_offset,
+            extended_phase_lines=full_kspace_shape[1],
+            row_offset=0,
         )
 
     print("Binned k-space shape:", binned_data.shape)
@@ -180,7 +182,7 @@ def run_pipeline(config):
         recon_method = config["processing"].get("reconstruction_method", "zf").lower()
 
         if recon_method == "grappa":
-            calib_region = tuple(config["processing"].get("calib_region", [30, 50]))
+            calib_region = tuple(config["processing"].get("calib_region", []))
             kernel_size = tuple(config["processing"].get("kernel_size", [5, 5]))
             images = recon.grappa_reconstruction(
                 binned_data_resp,
@@ -196,7 +198,7 @@ def run_pipeline(config):
         elif recon_method in ["zf", "conj_symm"]:
             images = recon.direct_ifft_reconstruction(
                 binned_data_resp,
-                extended_pe_lines=extended_phase_lines,
+                extended_pe_lines=full_kspace_shape[1],
                 use_conjugate_symmetry=recon_method != "zf",
                 count_mask=binned_count_resp,
             )
