@@ -29,89 +29,74 @@
 
 ##################################
 
-data:
-  twix_file: "new_DATA/raw/meas_MID00049_FID00679_Coronal_Cine_rt_150meas_gre.dat"
-  dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00009111 CORONAL_CINE_RT_150MEAS_GRE"
-  ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
+# data:
+#   twix_file: "new_DATA/raw/meas_MID00049_FID00679_Coronal_Cine_rt_150meas_gre.dat"
+#   dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00009111 CORONAL_CINE_RT_150MEAS_GRE"
+#   ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
+#   resp_column: 23
+#   full_kspace_shape: [150, 128, 30, 256] # [n_frames, extended_pe_lines, n_coils, readout]
+#   ref_scan: True
+
+# processing:
+#   sampling_rate: "twix_TR" # Options: "twix_TR", "twix_manual", or "dicom"
+#   resp_bin_method: "physio" # Options: "even" or "physio"
+#   num_cardiac_bins: 19
+#   # num_resp_bins: 1         # Only used if resp_bin_method is "even"
+#   num_inhalation_bins: 1   # Only used if resp_bin_method is "physio"
+#   num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
+#   resp_peak_method: "nk" # Options: "scipy" or "nk"
+#   resp_trough_method: "nk" # Options: "scipy" or "nk"
+#   reconstruction_method: "tgrappa" # Options: "grappa", "tgrappa", "zf", "conj_symm"
+
+# post_processing:
+#   view: "coronal"
+
+
+##################################
+
+data: # TODO
+  twix_file: "new_DATA/raw/meas_MID00054_FID00684_lax_Cine_rt_150meas_gre.dat"
+  dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00012001 LAX_CINE_RT_150MEAS_GRE"
+  ecg_columns: "18:21"
   resp_column: 23
-  full_kspace_shape: [150, 128, 30, 256] # [n_frames, extended_pe_lines, n_coils, readout]
+  full_kspace_shape: [150, 128, 26, 256]
   ref_scan: True
 
 processing:
-  sampling_rate: "twix" # Options: "twix" or "dicom"
-  resp_bin_method: "physio" # Options: "even" or "physio"
+  sampling_rate: "twix_manual"
+  resp_bin_method: "physio"
+  num_cardiac_bins: 19
+  num_inhalation_bins: 1
+  num_exhalation_bins: 1
+  resp_peak_method: "nk"
+  resp_trough_method: "nk"
+  reconstruction_method: "tgrappa"
+
+post_processing:
+  view: "lax"
+
+
+##################################
+
+data: # TODO
+  twix_file: "new_DATA/raw/meas_MID00056_FID00686_lax_Cine_rt_150meas_gre_75%FOV.dat"
+  dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00012001 LAX_CINE_RT_150MEAS_GRE"
+  ecg_columns: "18:21"
+  resp_column: 23
+  full_kspace_shape: [150, 96, 20, 256]
+  ref_scan: True
+
+processing:
+  sampling_rate: "twix_manual"
+  resp_bin_method: "physio"
   num_cardiac_bins: 10
-  # num_resp_bins: 1         # Only used if resp_bin_method is "even"
-  num_inhalation_bins: 3   # Only used if resp_bin_method is "physio"
-  num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
-  resp_peak_method: "nk" # Options: "scipy" or "nk"
-  resp_trough_method: "nk" # Options: "scipy" or "nk"
-  reconstruction_method: "tgrappa" # Options: "grappa", "tgrappa", "zf", "conj_symm"
+  num_inhalation_bins: 3
+  num_exhalation_bins: 1
+  resp_peak_method: "scipy"
+  resp_peak_kwargs: {"height": 0.6, "prominence": 0.15}
+  resp_trough_method: "scipy"
+  resp_trough_kwargs: {"height": 0.2, "prominence": 0.15}
+  reconstruction_method: "tgrappa"
 
-
-##################################
-
-# data:
-#   twix_file: "new_DATA/raw/meas_MID00047_FID00677_Coronal_Cine_rt_150meas_ssfp.dat"
-#   dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00008063 CORONAL_CINE_RT_150MEAS_ssfp"
-#   ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
-#   resp_column: 23
-#   n_frames: 150
-#   extended_pe_lines: 128
-#   offset: 32
-
-# processing:
-#   sampling_rate: "twix" # Options: "twix" or "dicom"
-#   resp_bin_method: "physio" # Options: "even" or "physio"
-#   num_cardiac_bins: 10
-#   # num_resp_bins: 1         # Only used if resp_bin_method is "even"
-#   num_inhalation_bins: 3   # Only used if resp_bin_method is "physio"
-#   num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
-#   resp_peak_method: "nk" # Options: "scipy" or "nk"
-#   resp_trough_method: "nk" # Options: "scipy" or "nk"
-#   reconstruction_method: "zf" # Options: "grappa", "tgrappa", "zf", "conj_symm"
-
-
-##################################
-
-# data:
-#   twix_file: "new_DATA/raw/meas_MID00054_FID00684_lax_Cine_rt_150meas_gre.dat"
-#   dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00012001 LAX_CINE_RT_150MEAS_GRE"
-#   ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
-#   resp_column: 23
-#   n_frames: 150
-#   extended_pe_lines: 128
-#   offset: 32
-
-# processing:
-#   sampling_rate: "twix" # Options: "twix" or "dicom"
-#   resp_bin_method: "physio" # Options: "even" or "physio"
-#   num_cardiac_bins: 10
-#   # num_resp_bins: 1         # Only used if resp_bin_method is "even"
-#   num_inhalation_bins: 3   # Only used if resp_bin_method is "physio"
-#   num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
-#   resp_peak_method: "nk" # Options: "scipy" or "nk"
-#   resp_trough_method: "nk" # Options: "scipy" or "nk"
-#   reconstruction_method: "zf" # Options: "grappa", "tgrappa", "zf", "conj_symm"
-
-##################################
-
-# data:
-#   twix_file: "new_DATA/raw/meas_MID00051_FID00681_Coronal_Cine_segmented_gre.dat"
-#   dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00012001 LAX_CINE_RT_150MEAS_GRE"
-#   ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
-#   resp_column: 23
-#   n_frames: 150
-#   extended_pe_lines: 128
-#   offset: 32
-
-# processing:
-#   sampling_rate: "twix" # Options: "twix" or "dicom"
-#   resp_bin_method: "physio" # Options: "even" or "physio"
-#   num_cardiac_bins: 10
-#   # num_resp_bins: 1         # Only used if resp_bin_method is "even"
-#   num_inhalation_bins: 3   # Only used if resp_bin_method is "physio"
-#   num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
-#   resp_peak_method: "nk" # Options: "scipy" or "nk"
-#   resp_trough_method: "nk" # Options: "scipy" or "nk"
-#   reconstruction_method: "zf" # Options: "grappa", "tgrappa", "zf", "conj_symm"
+post_processing:
+  view: "lax"

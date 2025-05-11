@@ -175,8 +175,8 @@ def score_params(arg_tuple):
         if valid.any()
         else np.inf
     )
-    print(f"wp={warp_penalty:.2f}, alpha={alpha:.2f}")
-    print(f"MAE={mae:.3f}, MSE={mse:.3f}, CustErr={cust_err:.3f}\n")
+    print(f"wp={warp_penalty:.3f}, alpha={alpha:.3f}")
+    print(f"MAE={mae:.4e}, MSE={mse:.4e}, CustErr={cust_err:.4e}\n")
     return warp_penalty, alpha, mae, mse, cust_err, phases_est
 
 
@@ -223,8 +223,8 @@ if __name__ == "__main__":
     # ----- parameter grid -----
     # warp_penalties = np.arange(0.0, 2.0, 0.2)
     # alphas = np.arange(0.8, 10.0, 0.4)
-    warp_penalties = np.array([0.00, 0.04, 1.0, 2.0])
-    alphas = np.array([2, 4, 8, 12, 16])
+    warp_penalties = np.logspace(-5, 1, 4)
+    alphas = np.logspace(0, 2, 4)
     grid = list(itertools.product(warp_penalties, alphas))
 
     print(f"Evaluating {len(grid)} parameter combinations …")

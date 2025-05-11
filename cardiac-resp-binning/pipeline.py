@@ -49,9 +49,23 @@ def run_pipeline(config):
 
     # Determine sampling frequency
     fs_method = config["processing"].get("sampling_rate", "twix")
-    if fs_method == "twix":
+    if fs_method == "twix_TR":
         fs = 1 / (twix_data[-1]["hdr"]["Phoenix"]["alTR"][0] * 1e-6)
-        print(f"Sampling frequency from TWIX: {fs:.2f} Hz, TR = {1/fs * 1e3} ms")
+        print(f"Sampling frequency from TWIX (TR): {fs:.2f} Hz, TR = {1/fs * 1e3} ms")
+    elif fs_method == "twix_manual":
+        first_time = None
+        last_time = None
+        count = 0
+        for i, mdb in enumerate(twix_data[-1]["mdb"]):
+            if mdb.is_image_scan() or (ref_scan and mdb.is_flag_set("PATREFSCAN")):
+                count += 1
+                last_time = mdb.mdh.TimeStamp
+                if first_time is None:
+                    first_time = mdb.mdh.TimeStamp
+        fs = count / ((last_time - first_time) * 2.5e-3)
+        print(
+            f"Sampling frequency from TWIX (manual): {fs:.2f} Hz, TR = {1/fs * 1e3} ms"
+        )
     elif fs_method == "dicom":
         framerate, frame_time = di.get_dicom_framerate(dicom_folder)
         fs = framerate * n_phase_encodes_per_frame
@@ -72,6 +86,7 @@ def run_pipeline(config):
             columns=np.s_[
                 int(ecg_columns.split(":")[0]) : int(ecg_columns.split(":")[1])
             ],
+            ref_scan=ref_scan,
         )
         r_peaks_list = ecg_resp.detect_r_peaks(ecg_data, fs)
         r_peaks = np.mean(r_peaks_list, axis=0).astype(int)
@@ -92,6 +107,7 @@ def run_pipeline(config):
             twix_data,
             segment_index=0,
             columns=np.s_[int(resp_column)],
+            ref_scan=ref_scan,
         )[:, np.newaxis]
     else:
         resp_data = ecg_resp.load_and_resample_resp(resp_file, kspace.shape[0])
@@ -207,9 +223,16 @@ def run_pipeline(config):
         print(f"Respiratory phase {resp_bin}: Reconstructed image shape:", images.shape)
 
         # Optional rotation, flip, crop
-        images = np.rot90(images, k=1, axes=(1, 2))
-        images = np.flip(images, axis=2)
-        images = images[:, 64:-64, :]
+        view = config["post_processing"].get("view", None)
+        if view == "coronal":
+            print("Coronal view selected...")
+            images = np.rot90(images, k=1, axes=(1, 2))
+            images = np.flip(images, axis=2)
+            images = images[:, 64:-64, :]
+        elif view == "lax":
+            print("LAX view selected...")
+            images = np.flip(images, axis=1)
+            images = images[:, :, 64:-64]
 
         cine_images_list.append(images)
 
