@@ -225,7 +225,7 @@ def read_twix_file(
     return scans
 
 
-def extract_image_data(scan, full_kspace_shape=None, ref_scan=False):
+def extract_image_data(scan, full_kspace_shape=None, ref_scan=False, offset=0):
     """
     Extract image (k-space) data from a list of TWIX scan dictionaries.
 
@@ -238,6 +238,8 @@ def extract_image_data(scan, full_kspace_shape=None, ref_scan=False):
         If not provided, the shape is inferred from the data.
     ref_scan : bool, optional
         If True, extract data from the reference scan. Default is False.
+    offset : int, optional
+        Offset to apply to the phase-encode lines. Default is 0.
 
     Returns
     -------
@@ -256,7 +258,7 @@ def extract_image_data(scan, full_kspace_shape=None, ref_scan=False):
     for mdb in scan["mdb"]:
         if mdb.is_image_scan() or (ref_scan and mdb.is_flag_set("PATREFSCAN")):
             if full_kspace_shape:
-                out[mdb.cRep, mdb.cLin, ...] = mdb.data
+                out[mdb.cRep, mdb.cLin + offset, ...] = mdb.data
             else:
                 data = np.array(mdb.data, copy=True)
                 image_blocks.append(data)

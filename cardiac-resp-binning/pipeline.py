@@ -40,15 +40,18 @@ def run_pipeline(config):
         "full_kspace_shape"
     ]  # [n_frames, extended_pe_lines, n_coils, readout]
     ref_scan = config["data"].get("ref_scan", False)
+    offset = config["data"].get("offset", 0)
 
     # Read TWIX data
     twix_data = di.read_twix_file(twix_file, include_scans=[-1], parse_pmu=False)
-    kspace = di.extract_image_data(twix_data[-1], full_kspace_shape, ref_scan=ref_scan)
+    kspace = di.extract_image_data(
+        twix_data[-1], full_kspace_shape, ref_scan=ref_scan, offset=offset
+    )
     n_phase_encodes_per_frame = np.count_nonzero(~np.all(kspace == 0, axis=(0, 2, 3)))
     assert n_phase_encodes_per_frame == int(n_phase_encodes_per_frame)
 
     # Determine sampling frequency
-    fs_method = config["processing"].get("sampling_rate", "twix")
+    fs_method = config["processing"].get("sampling_rate", "twix_TR")
     if fs_method == "twix_TR":
         fs = 1 / (twix_data[-1]["hdr"]["Phoenix"]["alTR"][0] * 1e-6)
         print(f"Sampling frequency from TWIX (TR): {fs:.2f} Hz, TR = {1/fs * 1e3} ms")
@@ -69,9 +72,7 @@ def run_pipeline(config):
     elif fs_method == "dicom":
         framerate, frame_time = di.get_dicom_framerate(dicom_folder)
         fs = framerate * n_phase_encodes_per_frame
-        print(
-            f"DICOM: Frame rate: {framerate:.2f} Hz, Frame time: {frame_time:.4f} s, fs: {fs:.2f}"
-        )
+        print(f"Sampling frequency from DICOM: {fs:.2f} Hz, TR = {1/fs * 1e3} ms")
     else:
         raise ValueError(f"Unsupported sampling frequency method: {fs_method}")
 
@@ -91,7 +92,12 @@ def run_pipeline(config):
         r_peaks_list = ecg_resp.detect_r_peaks(ecg_data, fs)
         r_peaks = np.mean(r_peaks_list, axis=0).astype(int)
     else:
-        events = ecg_resp.load_and_resample_events(events_file, kspace.shape[0])
+        count = 0
+        for i, mdb in enumerate(twix_data[-1]["mdb"]):
+            if mdb.is_image_scan() or (ref_scan and mdb.is_flag_set("PATREFSCAN")):
+                count += 1
+
+        events = ecg_resp.load_and_resample_events(events_file, count)
         r_peaks = np.nonzero(events)[0]
 
     # Basic heart rate estimation from R-peaks
@@ -110,7 +116,12 @@ def run_pipeline(config):
             ref_scan=ref_scan,
         )[:, np.newaxis]
     else:
-        resp_data = ecg_resp.load_and_resample_resp(resp_file, kspace.shape[0])
+        count = 0
+        for i, mdb in enumerate(twix_data[-1]["mdb"]):
+            if mdb.is_image_scan() or (ref_scan and mdb.is_flag_set("PATREFSCAN")):
+                count += 1
+
+        resp_data = ecg_resp.load_and_resample_resp(resp_file, count)
 
     resp_bin_method = config["processing"].get(
         "resp_bin_method", "even"
