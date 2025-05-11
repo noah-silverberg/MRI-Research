@@ -11,50 +11,25 @@ from tqdm import tqdm
 
 def direct_ifft_reconstruction(
     kspace,
+    *,
     extended_pe_lines=None,
-    offset=None,
+    row_map=None,
     use_conjugate_symmetry=False,
-    count_mask=None,
+    count_mask=None
 ):
     """
-    Perform a direct IFFT-based reconstruction across coils, with optional zero-fill
-    and conjugate symmetry filling.
-
-    Parameters
-    ----------
-    kspace : np.ndarray
-        Shape (n_frames, n_phase_encodes, n_coils, n_freq).
-    extended_pe_lines : int, optional
-        If not None, the total extended dimension for zero-filling in phase-encode.
-    offset : int, optional
-        Where to place the measured data within the extended dimension.
-    use_conjugate_symmetry : bool
-        If True, fill the missing lines via conjugate symmetry of the measured lines.
-    count_mask : np.ndarray, optional
-        A numeric array indicating how many times each line has been measured.
-        If provided, it is used to derive a measured_mask for symmetry filling.
-
-    Returns
-    -------
-    np.ndarray
-        Reconstructed magnitude images of shape (n_frames, output_rows, n_freq),
-        where output_rows = extended_pe_lines if provided, else n_phase_encodes.
+    If row_map is given, kspace is assumed to be (Nframes, Nmeas, Ncoil, Nfreq)
+    and row_map[i] tells where to drop row i inside the zero‑filled array.
     """
-    if extended_pe_lines is not None and offset is not None:
-        n_frames, phase_encodes, n_coils, n_freq = kspace.shape
+    if row_map is not None:
+        row_map = np.asarray(row_map, dtype=int)
+        n_frames, n_meas, n_coils, n_freq = kspace.shape
         kspace_mod = np.zeros(
             (n_frames, extended_pe_lines, n_coils, n_freq), dtype=kspace.dtype
         )
-        # Place measured lines
-        kspace_mod[:, offset : offset + phase_encodes, :, :] = kspace
-
-        # Derive measured mask
-        if count_mask is None:
-            measured_mask = np.zeros((n_frames, extended_pe_lines), dtype=bool)
-            measured_mask[:, offset : offset + phase_encodes] = True
-        else:
-            measured_mask = count_mask > 0
-
+        kspace_mod[:, row_map, :, :] = kspace
+        measured_mask = np.zeros((n_frames, extended_pe_lines), dtype=bool)
+        measured_mask[:, row_map] = True
         if use_conjugate_symmetry:
             kspace_mod = fill_conjugate_symmetry(kspace_mod, measured_mask)
     else:

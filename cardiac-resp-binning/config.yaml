@@ -1,35 +1,35 @@
-data:
-  twix_file: "20250307_JM/raw/meas_MID00115_FID27380_Cor_250306_2.dat"
-  dicom_folder: "20250307_JM/dcm/SE00028001 COR_250306_2"
-  # ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
-  ecg_files: [
-    "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG1_25.log",
-    "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG2_25.log",
-    "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG3_25.log",
-    "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG4_25.log",
-  ]
-  event_file: "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_EVNT_25.log"
-  resp_file: "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_RESP_200.log"
-  # resp_file: "Physio_20240327_122135_a1be91cb-3ecb-4c7e-93c4-d31e1a871138_RESP.log"
-  full_kspace_shape: [100, 128, 30, 256]
-  offset: 32
-  ref_scan: False
+# data:
+#   twix_file: "20250307_JM/raw/meas_MID00115_FID27380_Cor_250306_2.dat"
+#   dicom_folder: "20250307_JM/dcm/SE00028001 COR_250306_2"
+#   # ecg_columns: "18:21"         # Use a slice (e.g., "18:21") or single index
+#   ecg_files: [
+#     "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG1_25.log",
+#     "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG2_25.log",
+#     "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG3_25.log",
+#     "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_ECG4_25.log",
+#   ]
+#   event_file: "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_EVNT_25.log"
+#   resp_file: "20250307_JM/ecg_resp/cine3_2_Cor_250306_2_syncdata_RESP_200.log"
+#   # resp_file: "Physio_20240327_122135_a1be91cb-3ecb-4c7e-93c4-d31e1a871138_RESP.log"
+#   full_kspace_shape: [100, 128, 30, 256]
+#   offset: 32
+#   ref_scan: False
 
-processing:
-  resp_bin_method: "physio" # Options: "even" or "physio"
-  sampling_rate: "twix_manual"
-  num_cardiac_bins: 10
-  # num_resp_bins: 1         # Only used if resp_bin_method is "even"
-  num_inhalation_bins: 1   # Only used if resp_bin_method is "physio"
-  num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
-  resp_peak_method: "scipy" # Options: "scipy" or "nk"
-  resp_peak_kwargs: {"height": 0.6, "prominence": 0.2} # Only used if resp_peak_method is "scipy"
-  resp_trough_method: "scipy" # Options: "scipy" or "nk"
-  resp_trough_kwargs: {"height": 0.6, "prominence": 0.2} # Only used if resp_trough_method is "scipy"
-  reconstruction_method: "tgrappa" # Options: "grappa", "tgrappa", "zf", "conj_symm"
+# processing:
+#   resp_bin_method: "physio" # Options: "even" or "physio"
+#   sampling_rate: "twix_manual"
+#   num_cardiac_bins: 10
+#   # num_resp_bins: 1         # Only used if resp_bin_method is "even"
+#   num_inhalation_bins: 1   # Only used if resp_bin_method is "physio"
+#   num_exhalation_bins: 1   # Only used if resp_bin_method is "physio"
+#   resp_peak_method: "scipy" # Options: "scipy" or "nk"
+#   resp_peak_kwargs: {"height": 0.6, "prominence": 0.2} # Only used if resp_peak_method is "scipy"
+#   resp_trough_method: "scipy" # Options: "scipy" or "nk"
+#   resp_trough_kwargs: {"height": 0.6, "prominence": 0.2} # Only used if resp_trough_method is "scipy"
+#   reconstruction_method: "tgrappa" # Options: "grappa", "tgrappa", "zf", "conj_symm"
 
-post_processing:
-  view: "coronal"
+# post_processing:
+#   view: "coronal"
 
 ##################################
 
@@ -58,26 +58,26 @@ post_processing:
 
 ##################################
 
-# data: # TODO
-#   twix_file: "new_DATA/raw/meas_MID00054_FID00684_lax_Cine_rt_150meas_gre.dat"
-#   dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00012001 LAX_CINE_RT_150MEAS_GRE"
-#   ecg_columns: "18:21"
-#   resp_column: 23
-#   full_kspace_shape: [150, 128, 26, 256]
-#   ref_scan: True
+data: # TODO
+  twix_file: "new_DATA/raw/meas_MID00054_FID00684_lax_Cine_rt_150meas_gre.dat"
+  dicom_folder: "new_DATA/dcm-sorted/20250401_DP-20250401/20250401-0005/SE00012001 LAX_CINE_RT_150MEAS_GRE"
+  ecg_columns: "18:21"
+  resp_column: 23
+  full_kspace_shape: [150, 128, 26, 256]
+  ref_scan: True
 
-# processing:
-#   sampling_rate: "twix_manual"
-#   resp_bin_method: "physio"
-#   num_cardiac_bins: 19
-#   num_inhalation_bins: 1
-#   num_exhalation_bins: 1
-#   resp_peak_method: "nk"
-#   resp_trough_method: "nk"
-#   reconstruction_method: "tgrappa"
+processing:
+  sampling_rate: "dicom"
+  resp_bin_method: "physio"
+  num_cardiac_bins: 19
+  num_inhalation_bins: 1
+  num_exhalation_bins: 1
+  resp_peak_method: "nk"
+  resp_trough_method: "nk"
+  reconstruction_method: "tgrappa"
 
-# post_processing:
-#   view: "lax"
+post_processing:
+  view: "lax"
 
 
 ##################################

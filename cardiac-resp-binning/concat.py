@@ -49,6 +49,19 @@ def main():
     # Walk through all files recursively
     for root, dirs, files in os.walk(base_dir):
         for file in files:
+            if file not in [
+                "main.py",
+                "pipeline.py",
+                "binning.py",
+                "data_ingestion.py",
+                "ecg_resp.py",
+                "gif.py",
+                "kspace_filling.py",
+                "reconstruction.py",
+                "resp_fractions.py",
+            ]:
+                continue
+
             full_path = os.path.join(root, file)
             # Skip the script itself
             if os.path.abspath(full_path) == this_script:

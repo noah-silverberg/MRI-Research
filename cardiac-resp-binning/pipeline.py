@@ -50,6 +50,11 @@ def run_pipeline(config):
     n_phase_encodes_per_frame = np.count_nonzero(~np.all(kspace == 0, axis=(0, 2, 3)))
     assert n_phase_encodes_per_frame == int(n_phase_encodes_per_frame)
 
+    # --- after extract_image_data() in pipeline.py --------------------------
+    measured_rows = np.where(~np.all(kspace == 0, axis=(0, 2, 3)))[0]  # 1‑D array
+    kspace_meas = kspace[:, measured_rows, :, :]  # compact view
+    n_meas = len(measured_rows)
+
     # Determine sampling frequency
     fs_method = config["processing"].get("sampling_rate", "twix_TR")
     if fs_method == "twix_TR":
@@ -162,14 +167,14 @@ def run_pipeline(config):
         # Even respiratory bins
         num_resp_bins = config["processing"]["num_resp_bins"]
         binned_data, binned_count = binning.bin_reconstructed_kspace_joint(
-            kspace,
+            kspace_meas,  # compact
             r_peaks.flatten(),
             resp_peaks.flatten(),
             num_cardiac_bins=num_cardiac_bins,
             num_respiratory_bins=num_resp_bins,
-            n_phase_encodes_per_frame=n_phase_encodes_per_frame,
+            n_phase_encodes_per_frame=n_meas,
             extended_phase_lines=full_kspace_shape[1],
-            row_offset=0,
+            row_map=measured_rows,  # instead of row_offset
         )
         total_resp_bins = num_resp_bins
     else:
@@ -186,16 +191,16 @@ def run_pipeline(config):
         total_resp_bins = num_exhalation_bins + num_inhalation_bins
 
         binned_data, binned_count = binning.bin_reconstructed_kspace_joint_physio(
-            kspace,
+            kspace_meas,
             r_peaks.flatten(),
             resp_peaks.flatten(),
             resp_troughs.flatten(),
             num_cardiac_bins=num_cardiac_bins,
             num_exhalation_bins=num_exhalation_bins,
             num_inhalation_bins=num_inhalation_bins,
-            n_phase_encodes_per_frame=n_phase_encodes_per_frame,
+            n_phase_encodes_per_frame=n_meas,
             extended_phase_lines=full_kspace_shape[1],
-            row_offset=0,
+            row_map=measured_rows,
         )
 
     print("Binned k-space shape:", binned_data.shape)
@@ -224,8 +229,9 @@ def run_pipeline(config):
             )
         elif recon_method in ["zf", "conj_symm"]:
             images = recon.direct_ifft_reconstruction(
-                binned_data_resp,
+                binned_data_resp,  # shape (Nt, Nmeas, Nc, Nro)
                 extended_pe_lines=full_kspace_shape[1],
+                row_map=measured_rows,  # <‑‑ new
                 use_conjugate_symmetry=recon_method != "zf",
                 count_mask=binned_count_resp,
             )

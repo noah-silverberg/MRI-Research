@@ -15,7 +15,7 @@ def bin_reconstructed_kspace_joint(
     num_respiratory_bins,
     n_phase_encodes_per_frame,
     extended_phase_lines,
-    row_offset,
+    row_map,
 ):
     """
     Bin reconstructed k-space jointly by cardiac and respiratory phase.
@@ -36,8 +36,6 @@ def bin_reconstructed_kspace_joint(
         Phase encodes per frame.
     extended_phase_lines : int
         Extended total lines in zero-filled dimension.
-    row_offset : int
-        Offset for measured lines within the extended dimension.
 
     Returns
     -------
@@ -68,8 +66,8 @@ def bin_reconstructed_kspace_joint(
     )
 
     for f in range(n_frames):
-        for row in range(n_phase):
-            global_idx = f * n_phase + row
+        for loc, phys_row in enumerate(row_map):
+            global_idx = f * n_phase + loc
 
             # Cardiac cycle fraction
             cycle_idx_c = np.searchsorted(r_peaks, global_idx, side="right") - 1
@@ -93,10 +91,8 @@ def bin_reconstructed_kspace_joint(
             if resp_bin >= num_respiratory_bins:
                 resp_bin = num_respiratory_bins - 1
 
-            binned_sum[cardiac_bin, resp_bin, row + row_offset] += reconstructed_kspace[
-                f, row
-            ]
-            binned_count[cardiac_bin, resp_bin, row + row_offset] += 1
+            binned_sum[cardiac_bin, resp_bin, phys_row] += reconstructed_kspace[f, loc]
+            binned_count[cardiac_bin, resp_bin, phys_row] += 1
 
     binned_data = np.zeros_like(binned_sum)
     for i in range(num_cardiac_bins):
@@ -118,7 +114,7 @@ def bin_reconstructed_kspace_joint_physio(
     num_inhalation_bins,
     n_phase_encodes_per_frame,
     extended_phase_lines,
-    row_offset,
+    row_map,
 ):
     """
     Bin reconstructed k-space jointly by cardiac phase and a physiological
@@ -144,8 +140,6 @@ def bin_reconstructed_kspace_joint_physio(
         Phase encodes per frame.
     extended_phase_lines : int
         Extended lines dimension for zero-filling.
-    row_offset : int
-        Where measured lines are placed in the extended dimension.
 
     Returns
     -------
@@ -175,8 +169,8 @@ def bin_reconstructed_kspace_joint_physio(
     )
 
     for f in range(n_frames):
-        for row in range(n_phase):
-            global_idx = f * n_phase + row
+        for loc, phys_row in enumerate(row_map):
+            global_idx = f * n_phase + loc
 
             # Cardiac bin
             cycle_idx_c = np.searchsorted(r_peaks, global_idx, side="right") - 1
@@ -219,10 +213,10 @@ def bin_reconstructed_kspace_joint_physio(
                     resp_bin = num_inhalation_bins - 1
                 overall_resp_bin = num_exhalation_bins + resp_bin
 
-            binned_sum[
-                cardiac_bin, overall_resp_bin, row + row_offset
-            ] += reconstructed_kspace[f, row]
-            binned_count[cardiac_bin, overall_resp_bin, row + row_offset] += 1
+            binned_sum[cardiac_bin, overall_resp_bin, phys_row] += reconstructed_kspace[
+                f, loc
+            ]
+            binned_count[cardiac_bin, overall_resp_bin, phys_row] += 1
 
     # Average bins
     binned_data = np.zeros_like(binned_sum)
