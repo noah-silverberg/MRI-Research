@@ -270,7 +270,7 @@ def extract_image_data(scan, full_kspace_shape=None, ref_scan=False):
     return out
 
 
-def extract_iceparam_data(scans, segment_index=0, columns=None):
+def extract_iceparam_data(scans, segment_index=0, columns=None, ref_scan=False):
     """
     Extract ICE parameter data (e.g., ECG or other auxiliary signals) from the specified scan segment.
 
@@ -282,6 +282,8 @@ def extract_iceparam_data(scans, segment_index=0, columns=None):
         Index of the scan segment to use.
     columns : slice or list of int, optional
         Columns to extract from the ICE parameter array.
+    ref_scan : bool, optional
+        If True, extract data from the reference scan. Default is False.
 
     Returns
     -------
@@ -299,7 +301,9 @@ def extract_iceparam_data(scans, segment_index=0, columns=None):
         return np.array([])
 
     for mdb in scan["mdb"]:
-        if mdb.is_image_scan() and hasattr(mdb, "IceProgramPara"):
+        if (
+            mdb.is_image_scan() or (ref_scan and mdb.is_flag_set("PATREFSCAN"))
+        ) and hasattr(mdb, "IceProgramPara"):
             ice_arr = np.array(mdb.IceProgramPara, copy=True)
             ice_list.append(ice_arr)
 
