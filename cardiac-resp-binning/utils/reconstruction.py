@@ -122,7 +122,7 @@ def grappa_reconstruction(kspace, calib_region, kernel_size=(5, 5)):
 
         # Call cGRAPPA on the individual frame.
         # Now the frame_kspace and calib_data are both np.complex128.
-        recon_kspace_frame = pygrappa.cgrappa(
+        recon_kspace_frame = pygrappa.grappa(
             frame_kspace, calib_data, kernel_size=kernel_size, coil_axis=1
         )
 
