@@ -255,7 +255,7 @@ def run_pipeline(config):
 
     # --- Visualization: save a separate GIF for each respiratory phase ---
     print("Saving and displaying results for each respiratory phase...")
-    duration = 1000 * 60 / heart_rate / num_cardiac_bins  # ms between frames
+    duration = 1000 * 1000 * 60 / heart_rate / num_cardiac_bins  # ms between frames
 
     for resp_bin, images in enumerate(cine_images_list):
         gif_filename = f"binned_cine_resp_{resp_bin}.gif"
